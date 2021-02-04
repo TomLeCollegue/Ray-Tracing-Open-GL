@@ -79,7 +79,7 @@ namespace rt {
     
     /// returns the closest object intersected by the given ray.
     Real
-    rayIntersection( const Ray& ray, GraphicalObject*& object, Point3& p )
+    rayIntersection( const Ray& ray,GraphicalObject*& object, Point3& p )
     {
      Real distanceMin = -1.0f;
       Point3 pOther;

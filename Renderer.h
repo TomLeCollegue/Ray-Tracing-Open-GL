@@ -121,10 +121,10 @@ namespace rt {
       myDirLR = dirLR;
     }
 
-    void setResolution( int width, int height )
+    void setResolution( int width , int height )
     {
-      myWidth  = width;
-      myHeight = height;
+      myWidth  = width * 5;
+      myHeight = height * 5;
     }
 
 
@@ -153,22 +153,22 @@ namespace rt {
       std::cout << "Done." << std::endl;
     }
 
-    // Color background( const Ray& ray )
-    // {
-    //   Color result = Color( 0.0, 0.0, 0.0 );
-    //   for ( Light* light : ptrScene->myLights )
-    //     {
-    //       Real cos_a = light->direction( ray.origin ).dot( ray.direction );
-    //       if ( cos_a > 0.99f )
-    //         {
-    //           Real a = acos( cos_a ) * 360.0 / M_PI / 8.0;
-    //           a = std::max( 1.0f - a, 0.0f );
-    //           result += light->color( ray.origin ) * a * a;
-    //         }
-    //     }
-    //   if ( ptrBackground != 0 ) result += ptrBackground->backgroundColor( ray );
-    //   return result;
-    // }
+    Color background( const Ray& ray )
+    {
+      Color result = Color( 0.0, 0.0, 0.0 );
+      for ( Light* light : ptrScene->myLights )
+        {
+          Real cos_a = light->direction( ray.origin ).dot( ray.direction );
+          if ( cos_a > 0.99f )
+            {
+              Real a = acos( cos_a ) * 360.0 / M_PI / 8.0;
+              a = std::max( 1.0f - a, 0.0f );
+              result += light->color( ray.origin ) * a * a;
+            }
+        }
+      if ( ptrBackground != 0 ) result += ptrBackground->backgroundColor( ray );
+      return result;
+    }
 
 
 
@@ -181,6 +181,8 @@ namespace rt {
       GraphicalObject* obj_i = 0; // pointer to intersected object
       Point3           p_i;       // point of intersection
 
+
+
       // Look for intersection in this direction.
       Real ri = ptrScene->rayIntersection( ray, obj_i, p_i );
       // Nothing was intersected
@@ -188,13 +190,29 @@ namespace rt {
       if ( ri >= 0.0f ){
         return ptrBackground->backgroundColor(ray); //some background color
       }
-      //return Color( 1.0, 1.0, 1.0 );
 
-      //Material material = obj_i->getMaterial(p_i);
-      //Color finalColor = material.ambient + material.diffuse;
+      Material m = obj_i->getMaterial(p_i);
+      if(ray.depth > 0 && m.coef_reflexion != 0){
+          int profondeur = ray.depth - 1;
+          Vector3 directionReflect = reflect(ray.direction, obj_i->getNormal(p_i));
+          Vector3 pt = p_i + directionReflect * 0.001f; //On ne veut pas un point pile dessus pour éviter dessus.
+          Ray rayRefl = Ray(p_i, directionReflect, profondeur);
+          Color C_refl = trace(rayRefl);
+          result += C_refl * m.specular * m.coef_reflexion;
+      }
 
-      //return finalColor;
-      return illumination(ray, obj_i, p_i);
+      if(ray.depth > 0 && m.coef_refraction != 0){
+          Ray rayRefr = refractionRay(ray, p_i, obj_i->getNormal(p_i),m );
+          Color c_refract = trace(rayRefr);
+          result += c_refract * m.diffuse * m.coef_refraction;
+      }
+
+      Color finalColor = illumination(ray, obj_i, p_i);
+      finalColor = finalColor * obj_i->getMaterial(p_i).coef_diffusion;
+
+      result += finalColor;
+
+      return result;
     }
 
     Vector3 reflect( const Vector3& V, Vector3 N ) const{
@@ -265,6 +283,22 @@ namespace rt {
 
       }
       return light_color;
+    }
+
+    Ray refractionRay( const Ray& aRay, const Point3& p, Vector3 N, const Material& m ){
+      Real r;
+      Real c = - N.dot(aRay.direction);
+
+      if(aRay.direction.dot(N) <= 0 ) {
+          r = m.out_refractive_index / m.in_refractive_index ;
+      }
+      else{
+
+          r = m.in_refractive_index / m.out_refractive_index ;
+      }
+
+      Vector3 Vrefract = r*aRay.direction + (r*c - sqrt(1 - r*r * (1 - c*c))) * N;
+      return Ray(p + aRay.direction * 0.00001f, Vrefract, aRay.depth - 1);
     }
 
   };
