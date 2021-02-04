@@ -188,7 +188,7 @@ namespace rt {
       // Nothing was intersected
       //  if ( ri >= 0.0f ) return Color( 0.0, 0.0, 0.0 ); //some background color
       if ( ri >= 0.0f ){
-        return ptrBackground->backgroundColor(ray); //some background color
+        return this->background(ray); //some background color
       }
 
       Material m = obj_i->getMaterial(p_i);
@@ -208,7 +208,8 @@ namespace rt {
       }
 
       Color finalColor = illumination(ray, obj_i, p_i);
-      finalColor = finalColor * obj_i->getMaterial(p_i).coef_diffusion;
+      if(ray.depth !=0)
+        finalColor = finalColor * obj_i->getMaterial(p_i).coef_diffusion;
 
       result += finalColor;
 
