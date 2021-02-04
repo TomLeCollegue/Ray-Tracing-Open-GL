@@ -21,18 +21,19 @@ int main(int argc, char** argv)
   Scene scene;
   
   // Light at infinity
-  Light* light0 = new PointLight( GL_LIGHT0, Point4( 0,0,1,0 ),
-                                    Color( 1.0, 1.0, 1.0 ) );
-  Light* light1 = new PointLight( GL_LIGHT1, Point4( 7,5,15,1 ),
+Light* light0 = new PointLight( GL_LIGHT0, Point4( 0,0,1,0 ),
                                   Color( 1.0, 1.0, 1.0 ) );
-  scene.addLight( light0 );
-  scene.addLight( light1 );
-
-  // Objects
-  Sphere* sphere1 = new Sphere( Point3( 0, 0, 0), 2.0, Material::bronze() );
-  Sphere* sphere2 = new Sphere( Point3( 0, 4, 0), 1.0, Material::emerald() );
-  scene.addObject( sphere1 );
-  scene.addObject( sphere2 );
+Light* light1 = new PointLight( GL_LIGHT1, Point4( -10,-4,2,1 ),
+                                Color( 1.0, 1.0, 1.0 ) );
+scene.addLight( light0 );
+scene.addLight( light1 );
+// Objects
+Sphere* sphere1 = new Sphere( Point3( 0, 0, 0), 2.0, Material::bronze() );
+Sphere* sphere2 = new Sphere( Point3( 0, 4, 0), 1.0, Material::emerald() );
+Sphere* sphere3 = new Sphere( Point3( 6, 6, 0), 3.0, Material::whitePlastic() );
+scene.addObject( sphere1 );
+scene.addObject( sphere2 );
+scene.addObject( sphere3 );
   
   // Instantiate the viewer.
   Viewer viewer;

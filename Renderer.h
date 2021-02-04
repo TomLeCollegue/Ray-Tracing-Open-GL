@@ -213,12 +213,17 @@ namespace rt {
         Vector3 normalP = obj->getNormal(p);
         Color lightColor = (*it)->color(p); //B
 
+        //calcul des ombres
+        Ray ObjLight = Ray(p, lightDirection,1);
+        Color colorShadow = shadow(ObjLight, lightColor);
+
+
         //Diffuse
         Real coeffDiffuse = lightDirection.dot(normalP) / (lightDirection.norm() * normalP.norm()); //kd
         if(coeffDiffuse < 0){
           coeffDiffuse = 0;
         }
-        C += (m.diffuse * lightColor * coeffDiffuse); // C <-- C +kdD * B    
+        C += (m.diffuse * lightColor * coeffDiffuse * colorShadow); // C <-- C +kdD * B    //(+ les ombres)
 
         //Specular
         Vector3 W = reflect(ray.direction, normalP);
@@ -229,10 +234,37 @@ namespace rt {
         Real coeffSpecular = std::pow(cosBeta, m.shinyness);
         C+= (lightColor * m.specular * coeffSpecular);
 
+        //C += shadow(ray,C);
+        
       }
       C += m.ambient; //On ajoute à C la couleur ambiente 
 
       return C;
+    }
+
+    /// Calcule la couleur de la lumière (donnée par light_color) dans la
+    /// direction donnée par le rayon. Si aucun objet n'est traversé,
+    /// retourne light_color, sinon si un des objets traversés est opaque,
+    /// retourne du noir, et enfin si les objets traversés sont
+    /// transparents, attenue la couleur.
+    Color shadow( const Ray& ray, Color light_color ){
+      GraphicalObject *obj; 
+      Point3 p;
+      Point3 p2 = ray.origin + ray.direction * 0.01f;
+
+
+      while (light_color.max() > 0.003f){
+        Ray ray2 = Ray(p2, ray.direction, ray.depth);
+        Real r = ptrScene->rayIntersection(ray2, obj, p);
+        if(r>= 0.0f){
+          return light_color;
+        }
+        Material m = obj->getMaterial(p);
+        light_color = light_color * m.diffuse * m.coef_refraction;
+        p2 = p;
+
+      }
+      return light_color;
     }
 
   };
