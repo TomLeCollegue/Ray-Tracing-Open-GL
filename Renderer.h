@@ -48,37 +48,37 @@ namespace rt {
   }
 
   
-//   struct Background {
-//     virtual Color backgroundColor( const Ray& ray ) = 0;
-//   };
+  struct Background {
+    virtual Color backgroundColor( const Ray& ray ) = 0;
+  };
   
-//   struct MyBackground : public Background {
-//      Color backgroundColor( const Ray& ray )
-//      {
-//       Color result;
-//       float z  = ray.direction.at(2);
-//       if(z >= 0.0f && z <=0.5f){
-//           return Color(1 - 2 * z, 1 - 2 * z,1);
-//       }
-//       if( z > 0.5f && z <= 1.0f){
-//           return Color(0,0,1.0f - (z - 0.5f) * 2);
-//       }
-//       else {
+  struct MyBackground : public Background {
+     Color backgroundColor( const Ray& ray )
+     {
+      Color result;
+      float z  = ray.direction.at(2);
+      if(z >= 0.0f && z <=0.5f){
+          return Color(1 - 2 * z, 1 - 2 * z,1);
+      }
+      if( z > 0.5f && z <= 1.0f){
+          return Color(0,0,1.0f - (z - 0.5f) * 2);
+      }
+      else {
 
-//           Real x = -0.5f * ray.direction[ 0 ] / ray.direction[ 2 ];
-//           Real y = -0.5f * ray.direction[ 1 ] / ray.direction[ 2 ];
-//           Real d = sqrt( x*x + y*y );
-//           Real t = std::min( d, 30.0f ) / 30.0f;
-//           x -= floor( x );
-//           y -= floor( y );
-//           if ( ( ( x >= 0.5f ) && ( y >= 0.5f ) ) || ( ( x < 0.5f ) && ( y < 0.5f ) ) )
-//               result += (1.0f - t)*Color( 0.7f, 0.7f, 0.7f ) + t * Color( 1.0f, 1.0f, 1.0f );
-//           else
-//               result += (1.0f - t)*Color( 0.9f, 0.9f, 0.9f ) + t * Color( 1.0f, 1.0f, 1.0f );
-//           return result;
-//      }
-//     }
-// };
+          Real x = -0.5f * ray.direction[ 0 ] / ray.direction[ 2 ];
+          Real y = -0.5f * ray.direction[ 1 ] / ray.direction[ 2 ];
+          Real d = sqrt( x*x + y*y );
+          Real t = std::min( d, 30.0f ) / 30.0f;
+          x -= floor( x );
+          y -= floor( y );
+          if ( ( ( x >= 0.5f ) && ( y >= 0.5f ) ) || ( ( x < 0.5f ) && ( y < 0.5f ) ) )
+              result += (1.0f - t)*Color( 0.7f, 0.7f, 0.7f ) + t * Color( 1.0f, 1.0f, 1.0f );
+          else
+              result += (1.0f - t)*Color( 0.9f, 0.9f, 0.9f ) + t * Color( 1.0f, 1.0f, 1.0f );
+          return result;
+     }
+    }
+};
 
   /// This structure takes care of rendering a scene.
   struct Renderer {
@@ -100,14 +100,14 @@ namespace rt {
     /// corner pixel of the viewport, i.e. pixel (width,height)
     Vector3 myDirLR;
 
-    //Background* ptrBackground;
+    Background* ptrBackground;
 
     int myWidth;
     int myHeight;
 
     Renderer() : ptrScene( 0 ) {}
     Renderer( Scene& scene ) : ptrScene( &scene ) {
-      //ptrBackground = new MyBackground();
+      ptrBackground = new MyBackground();
     }
     void setScene( rt::Scene& aScene ) { ptrScene = &aScene; }
     
@@ -184,10 +184,10 @@ namespace rt {
       // Look for intersection in this direction.
       Real ri = ptrScene->rayIntersection( ray, obj_i, p_i );
       // Nothing was intersected
-       if ( ri >= 0.0f ) return Color( 0.0, 0.0, 0.0 ); //some background color
-      // if ( ri >= 0.0f ){
-      //   return background(ray); //some background color
-      // }
+      //  if ( ri >= 0.0f ) return Color( 0.0, 0.0, 0.0 ); //some background color
+      if ( ri >= 0.0f ){
+        return ptrBackground->backgroundColor(ray); //some background color
+      }
       //return Color( 1.0, 1.0, 1.0 );
 
       //Material material = obj_i->getMaterial(p_i);
@@ -199,7 +199,7 @@ namespace rt {
 
     Vector3 reflect( const Vector3& V, Vector3 N ) const{
       Vector3 W = V - 2 * V.dot(N) * N;
-      //return W;
+      return W;
     }
 
     Color illumination( const Ray& ray, GraphicalObject* obj, Point3 p ){
