@@ -199,6 +199,7 @@ namespace rt {
 
     Vector3 reflect( const Vector3& V, Vector3 N ) const{
       Vector3 W = V - 2 * V.dot(N) * N;
+      //return W;
     }
 
     Color illumination( const Ray& ray, GraphicalObject* obj, Point3 p ){
@@ -214,24 +215,19 @@ namespace rt {
 
         //Diffuse
         Real coeffDiffuse = lightDirection.dot(normalP) / (lightDirection.norm() * normalP.norm()); //kd
-        //std::cout << "hello" << std::endl;
         if(coeffDiffuse < 0){
           coeffDiffuse = 0;
-          
-        }
-        else{
-          std::cout << "hello0" << std::endl;
         }
         C += (m.diffuse * lightColor * coeffDiffuse); // C <-- C +kdD * B    
 
-        // //Specular
-        // Vector3 W = reflect(ray.direction, normalP);
-        // Real cosBeta = W.dot(lightDirection) / (lightDirection.norm() * W.norm());
-        // if(cosBeta < 0){
-        //    cosBeta = 0;
-        // } 
-        // Real coeffSpecular = std::pow(cosBeta, m.shinyness);
-        // C+= (lightColor * m.specular * coeffSpecular);
+        //Specular
+        Vector3 W = reflect(ray.direction, normalP);
+        Real cosBeta = W.dot(lightDirection) / (lightDirection.norm() * W.norm());
+        if(cosBeta < 0){
+           cosBeta = 0;
+        } 
+        Real coeffSpecular = std::pow(cosBeta, m.shinyness);
+        C+= (lightColor * m.specular * coeffSpecular);
 
       }
       C += m.ambient; //On ajoute à C la couleur ambiente 
