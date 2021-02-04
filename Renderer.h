@@ -181,22 +181,20 @@ namespace rt {
       GraphicalObject* obj_i = 0; // pointer to intersected object
       Point3           p_i;       // point of intersection
 
-
-
       // Look for intersection in this direction.
       Real ri = ptrScene->rayIntersection( ray, obj_i, p_i );
       // Nothing was intersected
-      //  if ( ri >= 0.0f ) return Color( 0.0, 0.0, 0.0 ); //some background color
       if ( ri >= 0.0f ){
         return this->background(ray); //some background color
       }
 
       Material m = obj_i->getMaterial(p_i);
+
       if(ray.depth > 0 && m.coef_reflexion != 0){
           int profondeur = ray.depth - 1;
           Vector3 directionReflect = reflect(ray.direction, obj_i->getNormal(p_i));
-          Vector3 pt = p_i + directionReflect * 0.001f; //On ne veut pas un point pile dessus pour éviter dessus.
-          Ray rayRefl = Ray(p_i, directionReflect, profondeur);
+          Vector3 pt = p_i + directionReflect * 0.01f; //On ne veut pas un point pile dessus pour éviter dessus.
+          Ray rayRefl = Ray(pt, directionReflect, profondeur);
           Color C_refl = trace(rayRefl);
           result += C_refl * m.specular * m.coef_reflexion;
       }
@@ -208,8 +206,7 @@ namespace rt {
       }
 
       Color finalColor = illumination(ray, obj_i, p_i);
-      if(ray.depth !=0)
-        finalColor = finalColor * obj_i->getMaterial(p_i).coef_diffusion;
+      finalColor = finalColor * obj_i->getMaterial(p_i).coef_diffusion;
 
       result += finalColor;
 
@@ -269,11 +266,12 @@ namespace rt {
     Color shadow( const Ray& ray, Color light_color ){
       GraphicalObject *obj; 
       Point3 p;
-      Point3 p2 = ray.origin + ray.direction * 0.01f;
+      Point3 p2 = ray.origin;
 
 
       while (light_color.max() > 0.003f){
-        Ray ray2 = Ray(p2, ray.direction, ray.depth);
+        Point3 pDecale = p2 + ray.direction * 0.0001f;
+        Ray ray2 = Ray(pDecale, ray.direction, ray.depth);
         Real r = ptrScene->rayIntersection(ray2, obj, p);
         if(r>= 0.0f){
           return light_color;
@@ -298,8 +296,15 @@ namespace rt {
           r = m.in_refractive_index / m.out_refractive_index ;
       }
 
-      Vector3 Vrefract = r*aRay.direction + (r*c - sqrt(1 - r*r * (1 - c*c))) * N;
-      return Ray(p + aRay.direction * 0.00001f, Vrefract, aRay.depth - 1);
+      Real tmp;
+      if(c>0)
+          tmp = r*c - sqrt(1 - ( (r*r) * (1 - (c*c) )));
+      else {
+          tmp = r * c + sqrt(1 - ((r * r) * (1 - (c * c))));
+      }
+
+      Vector3 Vrefract = r*aRay.direction + tmp * N;
+      return Ray(p + aRay.direction * 0.0001f, Vrefract, aRay.depth - 1);
     }
 
   };
